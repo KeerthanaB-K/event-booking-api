@@ -18,3 +18,17 @@ class BookingSerializer(serializers.ModelSerializer):
             "reference", "event", "event_title", "seats", "unit_price",
             "total_price", "status", "created_at", "cancelled_at",
         ]
+
+class OrganizerBookingSerializer(serializers.ModelSerializer):
+    attendee_name = serializers.SerializerMethodField()
+    attendee_email = serializers.EmailField(source="attendee.email", read_only=True)
+
+    class Meta:
+        model = Booking
+        fields = [
+            "reference", "attendee_name", "attendee_email", "seats",
+            "total_price", "status", "created_at",
+        ]
+
+    def get_attendee_name(self, obj):
+        return obj.attendee.get_full_name() or obj.attendee.username

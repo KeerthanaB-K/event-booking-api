@@ -49,3 +49,15 @@ class OrganizerEventSerializer(serializers.ModelSerializer):
                     {"capacity": f"Capacity cannot be below the {booked} seats already booked."}
                 )
         return attrs
+
+class OrganizerEventStatsSerializer(OrganizerEventSerializer):
+    seats_booked = serializers.IntegerField(read_only=True)
+    seats_remaining = serializers.IntegerField(read_only=True)
+    confirmed_bookings = serializers.IntegerField(read_only=True)
+    gross_revenue = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+
+    class Meta(OrganizerEventSerializer.Meta):
+        fields = OrganizerEventSerializer.Meta.fields + [
+            "seats_booked", "seats_remaining", "confirmed_bookings", "gross_revenue",
+        ]
+        read_only_fields = OrganizerEventSerializer.Meta.read_only_fields
