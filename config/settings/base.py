@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     # local apps
     "apps.accounts",
     "apps.events",
+    "apps.bookings",
 ]
 
 MIDDLEWARE = [
