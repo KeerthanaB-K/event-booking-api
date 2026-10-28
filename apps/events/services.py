@@ -2,6 +2,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.bookings.models import Booking
+
 from .exceptions import InvalidStateTransition
 from .models import Event
 
@@ -25,5 +27,7 @@ def cancel_event(*, event):
         raise InvalidStateTransition("Only published events can be cancelled.")
     event.status = Event.Status.CANCELLED
     event.save(update_fields=["status", "updated_at"])
-    # Phase 4 adds here: cancel all confirmed bookings of this event.
+    event.bookings.filter(status=Booking.Status.CONFIRMED).update(
+        status=Booking.Status.CANCELLED, cancelled_at=timezone.now()
+    )
     return event

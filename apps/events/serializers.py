@@ -5,12 +5,13 @@ from .models import Event
 
 class PublicEventSerializer(serializers.ModelSerializer):
     organizer_name = serializers.CharField(source="organizer.username", read_only=True)
+    seats_remaining = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Event
         fields = [
             "id", "title", "description", "venue", "city", "start_at", "end_at",
-            "capacity", "ticket_price", "organizer_name",
+            "capacity", "ticket_price", "seats_remaining", "organizer_name",
         ]
 
 class OrganizerEventSerializer(serializers.ModelSerializer):
@@ -38,5 +39,13 @@ class OrganizerEventSerializer(serializers.ModelSerializer):
         if "start_at" in attrs and attrs["start_at"] <= timezone.now():
             raise serializers.ValidationError({"start_at": "Start must be in the future."})
 
-        # Phase 4 adds here: capacity cannot go below the seats already booked.
+
+        if "capacity" in attrs and self.instance:
+            from apps.bookings.services import confirmed_seats
+
+            booked = confirmed_seats(self.instance)
+            if attrs["capacity"] < booked:
+                raise serializers.ValidationError(
+                    {"capacity": f"Capacity cannot be below the {booked} seats already booked."}
+                )
         return attrs

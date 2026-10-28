@@ -24,7 +24,7 @@ class PublicEventViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["start_at"]
 
     def get_queryset(self):
-        qs = Event.objects.select_related("organizer")
+        qs = Event.objects.select_related("organizer").with_seat_stats()
         if self.action == "list":
             return qs.published_upcoming()
         return qs.filter(status=Event.Status.PUBLISHED)

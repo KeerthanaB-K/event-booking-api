@@ -1,12 +1,27 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import Count, DecimalField, F, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
-
 
 class EventQuerySet(models.QuerySet):
     def published_upcoming(self):
         return self.filter(status=Event.Status.PUBLISHED, start_at__gt=timezone.now())
+
+    def with_seat_stats(self):
+        """Seats booked/remaining, confirmed bookings and revenue, all in ONE query."""
+        confirmed = Q(bookings__status="confirmed")
+        return self.annotate(
+            seats_booked=Coalesce(Sum("bookings__seats", filter=confirmed), 0),
+            confirmed_bookings=Count("bookings", filter=confirmed),
+            gross_revenue=Coalesce(
+                Sum("bookings__total_price", filter=confirmed),
+                Value(Decimal("0")),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            ),
+        ).annotate(seats_remaining=F("capacity") - F("seats_booked"))
 
 
 class Event(models.Model):
