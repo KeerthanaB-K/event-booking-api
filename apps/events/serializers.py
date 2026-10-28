@@ -3,6 +3,15 @@ from rest_framework import serializers
 
 from .models import Event
 
+class PublicEventSerializer(serializers.ModelSerializer):
+    organizer_name = serializers.CharField(source="organizer.username", read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            "id", "title", "description", "venue", "city", "start_at", "end_at",
+            "capacity", "ticket_price", "organizer_name",
+        ]
 
 class OrganizerEventSerializer(serializers.ModelSerializer):
     class Meta:

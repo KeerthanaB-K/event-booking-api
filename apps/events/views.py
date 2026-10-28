@@ -1,15 +1,33 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from . import services
 from .exceptions import InvalidStateTransition
+from .filters import EventFilter
 from .models import Event
 from .permissions import IsOrganizer
-from .serializers import OrganizerEventSerializer
+from .serializers import OrganizerEventSerializer, PublicEventSerializer
 
+
+class PublicEventViewSet(viewsets.ReadOnlyModelViewSet):
+    """Public: browse published events (no login needed)."""
+
+    serializer_class = PublicEventSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    filterset_class = EventFilter
+    search_fields = ["title", "description"]
+    ordering_fields = ["start_at", "ticket_price"]
+    ordering = ["start_at"]
+
+    def get_queryset(self):
+        qs = Event.objects.select_related("organizer")
+        if self.action == "list":
+            return qs.published_upcoming()
+        return qs.filter(status=Event.Status.PUBLISHED)
 
 class OrganizerEventViewSet(viewsets.ModelViewSet):
     """Organizer: manage OWN events only."""
