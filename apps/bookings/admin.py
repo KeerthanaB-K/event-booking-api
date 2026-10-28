@@ -10,3 +10,4 @@ class BookingAdmin(admin.ModelAdmin):
     search_fields = ("reference", "attendee__username", "attendee__email", "event__title")
     readonly_fields = ("reference", "created_at", "cancelled_at")
     autocomplete_fields = ("event", "attendee")
+    list_select_related = ("event", "attendee")
